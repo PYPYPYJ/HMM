@@ -14,8 +14,9 @@ double ForwardWithScale(HMM* hmm, long T, int* O, double** alpha, double* scale)
 
 	//初始化第一行alpha
 	scale[1] = tmp = 0.0;
+	int o1 = O[1];
 	for (i = 1; i <= N; ++i) {
-		alpha[1][i] = hmm->pi[i] * (hmm->B[i][O[1]]);
+		alpha[1][i] = hmm->pi[i] * (hmm->B[i][o1]);
 		tmp += alpha[1][i];
 	}
 	scale[1] = tmp;
@@ -35,6 +36,7 @@ double ForwardWithScale(HMM* hmm, long T, int* O, double** alpha, double* scale)
 	//其余每一行alpha[t][j]为上一行各状态转移至状态j并输出O[t]的概率和
 	for (t = 2; t <= T; ++t) {
 		scale[t] = tmp = 0.0;
+		int ot = O[t];
 
 		//itoj 是 1 * N 的向量，记录 状态i到状态j的转移概率，即 状态转移模型的第j列
 		double* itoj = dvector(1, N, "ForwardWithScale itoj");
@@ -55,7 +57,7 @@ double ForwardWithScale(HMM* hmm, long T, int* O, double** alpha, double* scale)
 
 			若 n > 0 ，则返回点乘结果，否则返回0
 			*/
-			alpha[t][j] = cblas_ddot(N, alpha[t - 1] + 1, 1, itoj + 1, 1) * (hmm->B[j][O[t]]);
+			alpha[t][j] = cblas_ddot(N, alpha[t - 1] + 1, 1, itoj + 1, 1) * (hmm->B[j][ot]);
 			
 			tmp += alpha[t][j];
 		}
@@ -67,7 +69,9 @@ double ForwardWithScale(HMM* hmm, long T, int* O, double** alpha, double* scale)
 
 	//返回值logprobability为当前模型参数下观测序列出现概率的对数
 	double logprobability = 0.0;
-	for (t = 1; t <= T; ++t)
+	for (t = 1; t < T; t += 2)
+		logprobability += (log(scale[t]) + log(scale[t + 1]));
+	for (; t <= T; ++t)
 		logprobability += log(scale[t]);
 	return logprobability;
 }

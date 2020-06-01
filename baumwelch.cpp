@@ -24,7 +24,11 @@ int BaumWelch(HMM* hmm, long T, int* O, double* logprobprev, double* logprobfina
 	if (!Xi)
 		callocerror("BaumWelch Xi init");
 	Xi -= 1;
-	for (t = 1; t <= T; ++t)
+	for (t = 1; t < T; t += 2) {
+		Xi[t] = dmatrix(1, N, 1, N, "BaumWelch Xi init 2");
+		Xi[t + 1] = dmatrix(1, N, 1, N, "BaumWelch Xi init 2");
+	}
+	for (; t <= T; ++t)
 		Xi[t] = dmatrix(1, N, 1, N, "BaumWelch Xi init 2");
 
 	logprobcurrent = *logprobprev = ForwardWithScale(hmm, T, O, alpha, scale);
@@ -52,11 +56,16 @@ int BaumWelch(HMM* hmm, long T, int* O, double* logprobprev, double* logprobfina
 			//A状态转移模型，A[i][j]更新为
 			//1~T-1 时刻 （状态i到状态j的联合后验分布和 / 状态i的后验分布和）
 			denominatorA = 0.0;
-			for (t = 1; t <= T - 1; ++t)
+			for (t = 1; t < T - 1; t += 2)		//计算 denominatorA 用到了2 x 1a loop unrolling 技术
+				denominatorA += (gamma[t][i] + gamma[t + 1][i]);
+			for (; t <= T - 1; ++t)
 				denominatorA += gamma[t][i];
+
 			for (j = 1; j <= N; ++j) {
 				numeratorA = 0.0;
-				for (t = 1; t <= T - 1; ++t)
+				for (t = 1; t < T - 1; t += 2)
+					numeratorA += (Xi[t][i][j] + Xi[t + 1][i][j]);
+				for (; t <= T - 1; ++t)
 					numeratorA += Xi[t][i][j];
 				hmm->A[i][j] = 0.001 + 0.999 * numeratorA / denominatorA;
 			}
@@ -167,9 +176,12 @@ void ComputeXi(HMM* hmm, long T, int* O, double** alpha, double** beta, double**
 void freeXi(double*** Xi, long T, int N)
 {
 	long t;
-	for (t = 1; t <= T; ++t) {
+	for (t = 1; t < T; t += 2) {
 		freedmatrix(Xi[t], 1, N, 1, N);
+		freedmatrix(Xi[t + 1], 1, N, 1, N);
 	}
+	for (; t <= T; ++t)
+		freedmatrix(Xi[t], 1, N, 1, N);
 	++Xi;
 	free(Xi);
 }

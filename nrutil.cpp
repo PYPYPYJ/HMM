@@ -60,7 +60,13 @@ void freedvector(double* vector, long nl, long nh)
 void freedmatrix(double** matrix, long nrl, long nrh, long ncl, long nch)
 {
 	int i;
-	for (i = nrh; i >= nrl; --i) {
+	for (i = nrh; i > nrl; i -= 2) {
+		matrix[i] += ncl;
+		free(matrix[i]);
+		matrix[i - 1] += ncl;
+		free(matrix[i - 1]);
+	}
+	for (; i >= nrl; --i) {
 		matrix[i] += ncl;
 		free(matrix[i]);
 	}
