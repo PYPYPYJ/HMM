@@ -1,2 +1,2 @@
-# HMM
-Hidden Markov Model
+//C version of hmm
+//implemented by PYPYPYJ
