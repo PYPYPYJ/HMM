@@ -1,2 +1,1 @@
-//C version of hmm
-//implemented by PYPYPYJ
+//MKL version of hmm, implemented by PYPYPYJ
