@@ -24,7 +24,7 @@ void BackwardWithScale(HMM* hmm, long T, int* O, double** beta, double* scale)
 		for (i = 1; i <= N; ++i) {
 			sum = 0.0;		
 			for (j = 1; j <= N; ++j)
-				sum += hmm->A[i][j] * hmm->B[j][next_o] * beta[t + 1][j];
+				sum += hmm->A[i][j] * hmm->B[next_o][j] * beta[t + 1][j];
 
 			beta[t][i] = sum / scale[t];
 		}

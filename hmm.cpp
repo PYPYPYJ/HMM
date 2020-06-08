@@ -2,7 +2,7 @@
 
 void ReadHMM(HMM* hmm, FILE* fp)
 {
-	int i, j, k, M, N;
+	int i, j, o, M, N;
 	double sum, tmp;
 	fscanf_s(fp, "M= %d\n", &M);
 	fscanf_s(fp, "N= %d\n", &N);
@@ -23,14 +23,14 @@ void ReadHMM(HMM* hmm, FILE* fp)
 		}
 		fscanf_s(fp, "\n");
 	}
-	hmm->B = dmatrix(1, N, 1, M, "ReadHMM B alloc");
+	hmm->B = dmatrix(1, M, 1, N, "ReadHMM B alloc");
 	fscanf_s(fp, "B:\n");
 	for (j = 1; j <= N; ++j) {
 		sum = 0.0;
-		for (k = 1; k <= M; ++k) {
+		for (o = 1; o <= M; ++o) {
 			fscanf_s(fp, "%lf", &tmp);
 			sum += tmp;
-			hmm->B[j][k] = tmp;
+			hmm->B[o][j] = tmp;
 		}
 		if (fabs(sum - 1.0) > 1e-5) {
 			fprintf(stderr, "ReadHMM error : B[%d][], sum = %lf", j, sum);
@@ -57,7 +57,7 @@ void ReadHMM(HMM* hmm, FILE* fp)
 void InitHMM(HMM* hmm, int N, int M)
 {
 	setseed(getseed());		//设置随机数种子
-	int i, j, k;
+	int i, j, o;
 	double sum;		//sum用于归一化处理
 
 	hmm->N = N;
@@ -88,26 +88,26 @@ void InitHMM(HMM* hmm, int N, int M)
 	hmm->B = dmatrix(1, N, 1, M, "InitHMM B alloc");
 	for (j = 1; j <= N; ++j) {
 		sum = 0.0;
-		for (k = 1; k <= M; ++k) {
-			hmm->B[j][k] = getrandom();
-			sum += hmm->B[j][k];
+		for (o = 1; o <= M; ++o) {
+			hmm->B[o][j] = getrandom();
+			sum += hmm->B[o][j];
 		}
-		for (k = 1; k <= M; ++k)
-			hmm->B[j][k] /= sum;
+		for (o = 1; o <= M; ++o)
+			hmm->B[o][j] /= sum;
 	}
 }
 
 void freeHMM(HMM* hmm)
 {
 	freedmatrix(hmm->A, 1, hmm->N, 1, hmm->N);
-	freedmatrix(hmm->B, 1, hmm->N, 1, hmm->M);
+	freedmatrix(hmm->B, 1, hmm->M, 1, hmm->N);
 	free(hmm->pi + 1);
 }
 
 void printHMM(HMM* hmm)
 {
-	int i, j, k;
-	printf("number of states : %d\n", hmm->N);
+	int i, j, o;
+	printf("number of hidden states : %d\n", hmm->N);
 	printf("number of symbols : %d\n", hmm->M);
 	printf("pi:\n");
 	for (i = 1; i <= hmm->N; ++i) {
@@ -122,9 +122,9 @@ void printHMM(HMM* hmm)
 		printf("\n");
 	}
 	printf("B:\n");
-	for (i = 1; i <= hmm->N; ++i) {
-		for (k = 1; k <= hmm->M; ++k) {
-			printf(" %f", hmm->B[i][k]);
+	for (j = 1; j <= hmm->N; ++j) {
+		for (o = 1; o <= hmm->M; ++o) {
+			printf(" %f", hmm->B[o][j]);
 		}
 		printf("\n");
 	}

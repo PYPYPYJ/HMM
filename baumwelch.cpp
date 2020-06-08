@@ -3,9 +3,9 @@
 extern bool first_iteration;
 extern double logprobinit;
 
-int BaumWelch(HMM* hmm, long T, int* O, double* logprobprev, double* logprobfinal)
+int BaumWelch(HMM* hmm, long T, int* O, double **alpha, double **beta, double *scale, double* logprobprev, double* logprobfinal)
 {
-	long i, j, k, t, M, N;
+	long i, j, o, t, M, N;
 	M = hmm->M;
 	N = hmm->N;
 
@@ -15,10 +15,7 @@ int BaumWelch(HMM* hmm, long T, int* O, double* logprobprev, double* logprobfina
 	double logprobtmp, logprobcurrent, delta;	//delta记录两次迭代概率之差
 	const double limit = 0.001;		//两次迭代概率之差小于此值时迭代停止
 
-	double** alpha, ** beta, * scale, ** gamma, *** Xi;
-	alpha = dmatrix(1, T, 1, N, "BaumWelch alpha init");					//前向概率矩阵，T * N
-	beta = dmatrix(1, T, 1, N, "BaumWelch beta init");						//后向概率矩阵，T * N
-	scale = dvector(1, T, "BaumWelch scale init");							//缩放因子，1 * N
+	double ** gamma, *** Xi;
 	gamma = dmatrix(1, T, 1, N, "BaumWelch gamma init");					//各状态的后验分布，T * N
 	Xi = (double***)calloc(T, sizeof(double**));	//相邻两状态的联合后验分布，T * N * N
 	if (!Xi)
@@ -72,12 +69,12 @@ int BaumWelch(HMM* hmm, long T, int* O, double* logprobprev, double* logprobfina
 			//B发射概率模型，B[i][k]更新为
 			//1~T时刻 （输出为k时状态i的后验分布和 / 状态i的后验分布和）
 			denominatorB = denominatorA + gamma[T][i];
-			for (k = 1; k <= M; ++k) {
+			for (o = 1; o <= M; ++o) {
 				numeratorB = 0.0;
 				for (t = 1; t <= T; ++t)
-					if (O[t] == k)
+					if (O[t] == o)
 						numeratorB += gamma[t][i];
-				hmm->B[i][k] = 0.001 + 0.999 * numeratorB / denominatorB;
+				hmm->B[o][i] = 0.001 + 0.999 * numeratorB / denominatorB;
 			}
 		}
 		//更新完参数后重新计算alpha、beta、gamma、Xi
@@ -100,9 +97,7 @@ int BaumWelch(HMM* hmm, long T, int* O, double* logprobprev, double* logprobfina
 
 	*logprobfinal = logprobcurrent;
 
-	freedmatrix(alpha, 1, T, 1, N);
-	freedmatrix(beta, 1, T, 1, N);
-	freedvector(scale, 1, T);
+	
 	freedmatrix(gamma, 1, T, 1, N);
 	freeXi(Xi, T, N);
 
@@ -141,31 +136,26 @@ void ComputeXi(HMM* hmm, long T, int* O, double** alpha, double** beta, double**
 		sum = 0.0;
 		int next_o = O[t + 1];
 
-		////jout取出发射概率模型的第O[t+1]列，即 各状态输出O[t+1]的概率
-		//double* jout = dvector(1, N, "ComputeXi jout alloc");
 		//double* tmp = dvector(1, N, "ComputeXi tmp alloc");
 
 		for (i = 1; i <= N; ++i) {
 
-			//for (j = 1; j <= N; ++j)
-			//	jout[j] = hmm->B[j][next_o];
-
-			//double* pa, * pb;
+			//double* pa, * pb, * hb;
 			//pa = hmm->A[i];
 			//pb = beta[t + 1];
+			//hb = hmm->B[next_o];
 			//for (j = 1; j <= N; ++j) {
-			//	tmp[j] = pa[j] * jout[j] * pb[j];
+			//	tmp[j] = pa[j] * hb[j] * pb[j];
 			//}
 			//cblas_dscal(N, alpha[t][i], tmp + 1, 1);
 
 			for (j = 1; j <= N; ++j) {
-				Xi[t][i][j] = alpha[t][i] * hmm->A[i][j] * hmm->B[j][next_o] * beta[t + 1][j];
+				Xi[t][i][j] = alpha[t][i] * hmm->A[i][j] * hmm->B[next_o][j] * beta[t + 1][j];
 				sum += Xi[t][i][j];
 				//Xi[t][i][j] = tmp[j];
 				//sum += tmp[j];
 			}
 		}
-		//freedvector(jout, 1, N);
 		//freedvector(tmp, 1, N);
 
 		for (i = 1; i <= N; ++i)

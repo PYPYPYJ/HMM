@@ -157,6 +157,7 @@
     <ClCompile Include="hmm.cpp" />
     <ClCompile Include="hmmrand.cpp" />
     <ClCompile Include="nrutil.cpp" />
+    <ClCompile Include="prospect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hmm.h" />

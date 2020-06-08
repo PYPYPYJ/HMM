@@ -23,12 +23,13 @@ double ForwardWithScale(HMM* hmm, long T, int* O, double** alpha, double* scale)
 void Backward(HMM* hmm, long T, int* O, double** beta);
 void BackwardWithScale(HMM* hmm, long T, int* O, double** beta, double* scale);
 //baumwelch.c		baumwelch算法估算参数直至收敛
-int BaumWelch(HMM* hmm, long T, int* O, double* logprobinit, double* logprobfinal);
+int BaumWelch(HMM* hmm, long T, int* O, double **alpha, double **beta, double *scale, double* logprobinit, double* logprobfinal);
 void ComputeGamma(HMM* hmm, long T, double** alpha, double** beta, double** gamma);
 void ComputeXi(HMM* hmm, long T, int* O, double** alpha, double** beta, double*** Xi);
 void freeXi(double*** Xi, long T, int N);
 void printABG(int N, long T, double** alpha, double** beta, double** gamma);
-
+//prospect.c		预测训练模型的准确度
+double Prospect(HMM* hmm, long T, int* testO, double **prospectalpha);
 //hmmrand.c		设置和获取随机数
 int getseed(void);
 void setseed(int seed);

@@ -16,7 +16,7 @@ double ForwardWithScale(HMM* hmm, long T, int* O, double** alpha, double* scale)
 	scale[1] = tmp = 0.0;
 	int o1 = O[1];
 	for (i = 1; i <= N; ++i) {
-		alpha[1][i] = hmm->pi[i] * (hmm->B[i][o1]);
+		alpha[1][i] = hmm->pi[i] * (hmm->B[o1][i]);
 		tmp += alpha[1][i];
 	}
 	scale[1] = tmp;
@@ -57,7 +57,7 @@ double ForwardWithScale(HMM* hmm, long T, int* O, double** alpha, double* scale)
 
 			若 n > 0 ，则返回点乘结果，否则返回0
 			*/
-			alpha[t][j] = cblas_ddot(N, alpha[t - 1] + 1, 1, itoj + 1, 1) * (hmm->B[j][ot]);
+			alpha[t][j] = cblas_ddot(N, alpha[t - 1] + 1, 1, itoj + 1, 1) * (hmm->B[ot][j]);
 			
 			tmp += alpha[t][j];
 		}
